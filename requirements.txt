@@ -1,0 +1,6 @@
+torch==1.6.0
+torchvision==0.7.0
+scipy
+scikit-image
+opencv-python-headless
+git+https://github.com/waggle-sensor/pywaggle@v0.32.0

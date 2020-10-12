@@ -1,0 +1,21 @@
+{
+    "architecture": [
+        "linux/amd64"
+    ],
+    "arguments": [
+        "interval",
+        "5"
+    ],
+    "description": "Car Pedestrian Counter",
+    "inputs": [
+        {
+            "id": "interval",
+            "type": "int"
+        }
+    ],
+    "id": 124,
+    "name": "plugin-carped",
+    "namespace": "waggle",
+    "source": "https://github.com/waggle-sensor/plugin-carped.git#master#./Dockerfile",
+    "version": "0.1.0"
+}
