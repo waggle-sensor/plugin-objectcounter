@@ -69,7 +69,7 @@ if __name__ == '__main__':
         help='Path to model')
     parser.add_argument(
         '-image-size', dest='image_size',
-        action='store', default=300, type=int
+        action='store', default=300, type=int,
         help='Input image size')
     parser.add_argument(
         '-confidence-level', dest='confidence_level',
