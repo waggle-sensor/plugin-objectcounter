@@ -69,7 +69,7 @@ if __name__ == '__main__':
         help='Path to model')
     parser.add_argument(
         '-image-size', dest='image_size',
-        action='store', default=300,
+        action='store', default=300, type=int
         help='Input image size')
     parser.add_argument(
         '-confidence-level', dest='confidence_level',
@@ -77,11 +77,11 @@ if __name__ == '__main__':
         help='Confidence level [0. - 1.] to filter out result')
     parser.add_argument(
         '-interval', dest='interval',
-        action='store', default=0,
+        action='store', default=0, type=int,
         help='Inference interval in seconds')
     parser.add_argument(
         '-sampling-interval', dest='sampling_interval',
-        action='store', default=-1,
+        action='store', default=-1, type=int,
         help='Sampling interval in seconds')
     parser.add_argument(
         '-sampling-path', dest='sampling_path',
