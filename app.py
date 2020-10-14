@@ -8,7 +8,8 @@ from hubconf import nvidia_ssd_processing_utils
 import waggle.plugin as plugin
 from waggle.data import open_data_source
 
-TOPIC_IMAGE = "bottom_image"
+TOPIC_INPUT_IMAGE = "bottom_image"
+TOPIC_SAMPLE_IMAGE = "image.bottom"
 TOPIC_CAR = "env.count.car"
 TOPIC_PEDESTRIAN = "env.count.pedestrian"
 
@@ -21,6 +22,7 @@ def run(args):
     utils = nvidia_ssd_processing_utils()
     classes_to_labels = utils.get_coco_object_dictionary()
 
+    print("Loading {}...".format(args.model))
     if torch.cuda.is_available():
         print("CUDA is available")
         ssd_model = torch.load(args.model)
@@ -30,10 +32,14 @@ def run(args):
         ssd_model = torch.load(args.model, map_location=torch.device('cpu'))
     ssd_model.eval()
 
-    print("Cut-out confidence level is {:.2f}".format(args.confidence_level))
+    print("Cut-out confidence level is set to {:.2f}".format(args.confidence_level))
+    sampling_countdown = -1
+    if args.sampling_interval >= 0:
+        print("Sampling enabled -- occurs every {:d}th inferencing".format(args.sampling_interval))
+        sampling_countdown = args.sampling_interval
     print("Car pedestrian counter starts...")
     while True:
-        with open_data_source(id=TOPIC_IMAGE) as cap:
+        with open_data_source(id=TOPIC_INPUT_IMAGE) as cap:
             timestamp, image = cap.get()
 
             inputs = [utils.prepare_input(None, image)]
@@ -56,7 +62,20 @@ def run(args):
                 elif "person" in classes_to_labels[cls]:
                     pedestrians += 1
 
-            print("cars {:d}, pedestrians{:d}".format(cars, pedestrians))
+            print("Cars {:d}, pedestrians{:d}".format(cars, pedestrians))
+            plugin.publish(TOPIC_CAR, cars)
+            plugin.publish(TOPIC_PEDESTRIAN, pedestrians)
+            print("Measures published")
+
+            if sampling_countdown > 0:
+                sampling_countdown -= 1
+            elif sampling_countdown == 0:
+                timestamp_ns = int(timestamp*1e9)
+                plugin.publish(TOPIC_SAMPLE_IMAGE, plugin.Image(image), timestamp=timestamp_ns)
+                print("A sample is published to {}".format(TOPIC_SAMPLE_IMAGE))
+                # Reset the count
+                sampling_countdown = args.sampling_interval
+
             if args.interval > 0:
                 time.sleep(args.interval)
 
@@ -82,9 +101,5 @@ if __name__ == '__main__':
     parser.add_argument(
         '-sampling-interval', dest='sampling_interval',
         action='store', default=-1, type=int,
-        help='Sampling interval in seconds')
-    parser.add_argument(
-        '-sampling-path', dest='sampling_path',
-        action='store', default='./',
-        help='Path to sample images')
+        help='Sampling interval between inferencing')
     run(parser.parse_args())
