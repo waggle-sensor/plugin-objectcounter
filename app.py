@@ -63,15 +63,14 @@ def run(args):
                     pedestrians += 1
 
             print("Cars {:d}, pedestrians{:d}".format(cars, pedestrians))
-            plugin.publish(TOPIC_CAR, cars)
-            plugin.publish(TOPIC_PEDESTRIAN, pedestrians)
+            plugin.publish(TOPIC_CAR, cars, timestamp=timestamp)
+            plugin.publish(TOPIC_PEDESTRIAN, pedestrians, timestamp=timestamp)
             print("Measures published")
 
             if sampling_countdown > 0:
                 sampling_countdown -= 1
             elif sampling_countdown == 0:
-                timestamp_ns = int(timestamp*1e9)
-                plugin.publish(TOPIC_SAMPLE_IMAGE, plugin.Image(image), timestamp=timestamp_ns)
+                plugin.publish(TOPIC_SAMPLE_IMAGE, plugin.Image(image), timestamp=timestamp)
                 print("A sample is published to {}".format(TOPIC_SAMPLE_IMAGE))
                 # Reset the count
                 sampling_countdown = args.sampling_interval
