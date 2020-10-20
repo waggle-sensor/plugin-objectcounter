@@ -47,8 +47,8 @@ def run(args):
             inputs = [utils.prepare_input(None, image)]
             tensor = utils.prepare_tensor(inputs)
 
-            #with torch.no_grad():
-            detections_batch = ssd_model(tensor)
+            with torch.no_grad():
+                detections_batch = ssd_model(tensor)
 
             results_per_input = utils.decode_results(detections_batch)
             best_results_per_input = [utils.pick_best(results, args.confidence_level) for results in results_per_input]
