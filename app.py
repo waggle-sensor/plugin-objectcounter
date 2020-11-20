@@ -1,6 +1,7 @@
 import time
 import argparse
 
+import cv2
 import torch
 import numpy as np
 from hubconf import nvidia_ssd_processing_utils
@@ -8,8 +9,7 @@ from hubconf import nvidia_ssd_processing_utils
 import waggle.plugin as plugin
 from waggle.data import open_data_source
 
-TOPIC_INPUT_IMAGE = "street_image"
-TOPIC_SAMPLE_IMAGE = "image.bottom"
+TOPIC_INPUT_IMAGE = "sky_image"
 #TOPIC_CAR = "test.int.1"
 #TOPIC_PEDESTRIAN = "test.int.2"
 TOPIC_CAR = "env.count.car"
@@ -34,10 +34,10 @@ def run(args):
         ssd_model = torch.load(args.model, map_location=torch.device('cpu'))
     ssd_model.eval()
 
-    print("Cut-out confidence level is set to {:.2f}".format(args.confidence_level))
+    print(f"Cut-out confidence level is set to {args.confidence_level}")
     sampling_countdown = -1
     if args.sampling_interval >= 0:
-        print("Sampling enabled -- occurs every {:d}th inferencing".format(args.sampling_interval))
+        print(f"Sampling enabled -- occurs every {args.sampling_interval}th inferencing")
         sampling_countdown = args.sampling_interval
     print("Car pedestrian counter starts...")
     while True:
@@ -64,16 +64,20 @@ def run(args):
                 elif "person" in classes_to_labels[cls]:
                     pedestrians += 1
 
-            print("Cars {:d}, pedestrians{:d}".format(cars, pedestrians))
+
             plugin.publish(TOPIC_CAR, cars, timestamp=timestamp)
             plugin.publish(TOPIC_PEDESTRIAN, pedestrians, timestamp=timestamp)
-            print("Measures published")
+            if args.debug:
+                print(f"Cars: {cars}, pedestrians: {pedestrians}")
+                print(f"Measures published")
 
             if sampling_countdown > 0:
                 sampling_countdown -= 1
             elif sampling_countdown == 0:
-                plugin.publish(TOPIC_SAMPLE_IMAGE, plugin.Image(image), timestamp=timestamp)
-                print("A sample is published to {}".format(TOPIC_SAMPLE_IMAGE))
+                cv2.imwrite('/tmp/sample.jpg', image)
+                plugin.upload_file('/tmp/sample.jpg')
+                if args.debug:
+                    print("A sample is published")
                 # Reset the count
                 sampling_countdown = args.sampling_interval
 
@@ -83,6 +87,10 @@ def run(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-debug', dest='debug',
+        action='store_true', default=False,
+        help='Debug flag')
     parser.add_argument(
         '-model', dest='model',
         action='store', default='coco_ssd_resnet50_300_fp32.pth',
