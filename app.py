@@ -9,7 +9,7 @@ from hubconf import nvidia_ssd_processing_utils
 import waggle.plugin as plugin
 from waggle.data import open_data_source
 
-TOPIC_INPUT_IMAGE = "sky_image"
+TOPIC_INPUT_IMAGE = "street_image"
 #TOPIC_CAR = "test.int.1"
 #TOPIC_PEDESTRIAN = "test.int.2"
 TOPIC_CAR = "env.count.car"
