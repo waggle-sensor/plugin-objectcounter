@@ -1,3 +1,4 @@
+import logging
 import time
 import argparse
 
@@ -10,8 +11,6 @@ import waggle.plugin as plugin
 from waggle.data import open_data_source
 
 TOPIC_INPUT_IMAGE = "street_image"
-#TOPIC_CAR = "test.int.1"
-#TOPIC_PEDESTRIAN = "test.int.2"
 TOPIC_CAR = "env.count.car"
 TOPIC_PEDESTRIAN = "env.count.pedestrian"
 
@@ -19,27 +18,32 @@ plugin.init()
 
 
 def run(args):
+    logging.basicConfig(
+        level=logging.DEBUG if args.debug else logging.INFO,
+        format='%(asctime)s %(message)s',
+        datefmt='%Y/%m/%d %H:%M:%S')
+
     # utils are sourced from
     # https://github.com/NVIDIA/DeepLearningExamples/blob/master/PyTorch/Detection/SSD/src/utils.py
     utils = nvidia_ssd_processing_utils()
     classes_to_labels = utils.get_coco_object_dictionary()
 
-    print("Loading {}...".format(args.model))
+    logging.info("loading model %s...", args.model)
     if torch.cuda.is_available():
-        print("CUDA is available")
+        logging.info("CUDA is available")
         ssd_model = torch.load(args.model)
         ssd_model.to('cuda')
     else:
-        print("CUDA is not avilable; use CPU")
+        logging.info("CUDA is not avilable; using CPU")
         ssd_model = torch.load(args.model, map_location=torch.device('cpu'))
     ssd_model.eval()
 
-    print(f"Cut-out confidence level is set to {args.confidence_level}")
+    logging.info("Cut-out confidence level is set to %s", args.confidence_level)
     sampling_countdown = -1
     if args.sampling_interval >= 0:
-        print(f"Sampling enabled -- occurs every {args.sampling_interval}th inferencing")
+        logging.info("Sampling enabled -- occurs every %sth inferencing", args.sampling_interval)
         sampling_countdown = args.sampling_interval
-    print("Car pedestrian counter starts...")
+    logging.info("Car pedestrian counter starts...")
     while True:
         with open_data_source(id=TOPIC_INPUT_IMAGE) as cap:
             timestamp, image = cap.get()
@@ -67,17 +71,14 @@ def run(args):
 
             plugin.publish(TOPIC_CAR, cars, timestamp=timestamp)
             plugin.publish(TOPIC_PEDESTRIAN, pedestrians, timestamp=timestamp)
-            if args.debug:
-                print(f"Cars: {cars}, pedestrians: {pedestrians}")
-                print(f"Measures published")
+            logging.info("publish cars=%d, pedestrians=%d", cars, pedestrians)
 
             if sampling_countdown > 0:
                 sampling_countdown -= 1
             elif sampling_countdown == 0:
                 cv2.imwrite('/tmp/sample.jpg', image)
                 plugin.upload_file('/tmp/sample.jpg')
-                if args.debug:
-                    print("A sample is published")
+                logging.info("uploaded sample")
                 # Reset the count
                 sampling_countdown = args.sampling_interval
 
