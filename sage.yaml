@@ -5,8 +5,6 @@ description: Car and pedestrian counter
 
 source:
     architectures:
-        - linux/amd64
-        - linux/arm/v7
         - linux/arm64
     url: https://github.com/waggle-sensor/plugin-carped.git
 

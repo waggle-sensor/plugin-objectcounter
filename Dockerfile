@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/cuda:11.0-runtime-ubuntu20.04
+FROM waggle/plugin-base:1.1.0-ml-cuda10.2-l4t
 
 RUN apt-get update \
   && apt-get install -y \
