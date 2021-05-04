@@ -3,7 +3,7 @@
     "namespace": "waggle",
     "name": "plugin-carped",
     "description": "Car Pedestrian Counter",
-    "source": "https://github.com/waggle-sensor/plugin-carped.git#master#./Dockerfile",
+    "source": "https://github.com/waggle-sensor/plugin-carped.git",
     "version": "0.1.0",
     "arguments": [
         "interval",
