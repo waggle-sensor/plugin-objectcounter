@@ -1,12 +1,4 @@
-FROM waggle/plugin-base:1.1.0-ml-cuda10.2-l4t
-
-RUN apt-get update \
-  && apt-get install -y \
-  python3 \
-  python3-pip \
-  nano \
-  git \
-  && rm -rf /var/lib/apt/lists/*
+FROM waggle/plugin-base:1.1.1-ml-cuda10.2-l4t
 
 COPY requirements.txt /app/
 RUN pip3 install --no-cache-dir -r /app/requirements.txt

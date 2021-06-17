@@ -1,14 +1,11 @@
-name: carped
+name: objcounter
 namespace: waggle
 version: "0.0.0"
-description: Car and pedestrian counter
-
+description: "Object Counter"
 source:
     architectures:
         - linux/arm64
-    url: https://github.com/waggle-sensor/plugin-carped.git
-
-
+    url: https://github.com/waggle-sensor/plugin-objectcounter.git
 inputs:
     - id: interval
       type: int
