@@ -6,6 +6,7 @@ source:
     architectures:
         - linux/arm64
     url: https://github.com/waggle-sensor/plugin-objectcounter.git
+    branch: master
 inputs:
     - id: interval
       type: int
