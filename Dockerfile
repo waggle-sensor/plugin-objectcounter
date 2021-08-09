@@ -22,7 +22,7 @@ RUN pip3 install --no-cache-dir -r /app/requirements.txt
 
 COPY PyTorch /app/PyTorch
 COPY hubconf.py app.py category_names.txt /app/
-COPY coco_ssd_resnet50_300_fp32.pth /app/coco_ssd_resnet50_300_fp32.pth
+
 ARG SAGE_STORE_URL="https://osn.sagecontinuum.org"
 ARG BUCKET_ID_MODEL="a54b47cd-2a0f-4004-b576-9583693884ae"
 
