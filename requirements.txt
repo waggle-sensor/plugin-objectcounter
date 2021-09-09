@@ -4,4 +4,4 @@
 scikit-image
 #opencv-python-headless
 git+https://github.com/sagecontinuum/sage-cli.git
-https://github.com/waggle-sensor/pywaggle/archive/0.43.2.zip
+https://github.com/waggle-sensor/pywaggle/archive/0.44.0.zip

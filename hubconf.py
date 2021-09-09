@@ -258,6 +258,30 @@ def nvidia_ssd_processing_utils():
             return imgScaled
 
         @staticmethod
+        def descale_box(box, image_width, image_height):
+            """Calculate the original points of a box manipulated by rescale and crop_center"""
+            out = []
+            margin_half = abs(image_width - image_height) / 2.
+            if image_width > image_height:
+                ratio = image_height / float(image_width)
+                out.append(int(image_width * box[0] * ratio + margin_half))
+                out.append(int(image_height * box[1]))
+                out.append(int(image_width * box[2] * ratio + margin_half))
+                out.append(int(image_height * box[3]))
+            elif image_height > image_width:
+                ratio = image_width / float(image_height)
+                out.append(int(image_width * box[0]))
+                out.append(int(image_height * box[1] * ratio + margin_half))
+                out.append(int(image_width * box[2]))
+                out.append(int(image_height * box[3] * ratio + margin_half))
+            else:
+                out.append(int(image_width * box[0]))
+                out.append(int(image_height * box[1]))
+                out.append(int(image_width * box[2]))
+                out.append(int(image_height * box[3]))
+            return out
+
+        @staticmethod
         def crop_center(img, cropx, cropy):
             """Code from Loading_Pretrained_Models.ipynb - a Caffe2 tutorial"""
             y, x, c = img.shape
@@ -284,13 +308,13 @@ def nvidia_ssd_processing_utils():
             return tensor
 
         @staticmethod
-        def prepare_input(img_uri, image=None):
+        def prepare_input(img_uri, image=None, image_size=(300, 300)):
             if image is not None:
                 img = image
             else:
                 img = Processing.load_image(img_uri)
-            img = Processing.rescale(img, 300, 300)
-            img = Processing.crop_center(img, 300, 300)
+            img = Processing.rescale(img, image_size[0], image_size[1])
+            img = Processing.crop_center(img, image_size[0], image_size[1])
             img = Processing.normalize(img)
             return img
 

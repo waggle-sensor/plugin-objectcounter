@@ -2,6 +2,7 @@
 import logging
 import time
 import argparse
+from pathlib import Path
 
 import cv2
 import torch
@@ -9,9 +10,9 @@ import numpy as np
 from hubconf import nvidia_ssd_processing_utils
 
 import waggle.plugin as plugin
-from waggle.data import open_data_source
+from waggle.data.vision import Camera
 
-TOPIC_TEMPLATE = "env.count."
+TOPIC_TEMPLATE = "env.count"
 
 plugin.init()
 
@@ -49,12 +50,22 @@ def run(args):
     if args.sampling_interval >= 0:
         logging.info("sampling enabled -- occurs every %sth inferencing", args.sampling_interval)
         sampling_countdown = args.sampling_interval
+    camera = Camera(Path(args.stream))
     logging.info("object counter starts...")
     while True:
-        with open_data_source(id=args.stream) as cap:
-            timestamp, image = cap.get()
+        for sample in camera.stream():
+            do_sampling = False
+            if sampling_countdown > 0:
+                sampling_countdown -= 1
+            elif sampling_countdown == 0:
+                do_sampling = True
+                sampling_countdown = args.sampling_interval
 
-            inputs = [utils.prepare_input(None, image)]
+            image = sample.data
+            height = image.shape[0]
+            width = image.shape[1]
+            timestamp = sample.timestamp
+            inputs = [utils.prepare_input(None, image, image_size=(args.image_size, args.image_size))]
             tensor = utils.prepare_tensor(inputs, cuda=flag_cuda)
 
             with torch.no_grad():
@@ -67,13 +78,19 @@ def run(args):
             classes -= 1
 
             found = {}
-            for box, cls in zip(bboxes, classes):
+            for box, cls, conf in zip(bboxes, classes, confidences):
                 object_label = classes_to_labels[cls]
                 if object_label in target_objects:
+                    if do_sampling:
+                        box = utils.descale_box(box, width, height)
+                        print(f'{box}, {width}, {height}')
+                        rounded_conf = round(float(conf), 2)
+                        image = cv2.putText(image, f'{object_label}: {rounded_conf}', (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,255,0), 2)
+                        image = cv2.rectangle(image, (box[0], box[1]), (box[2], box[3]), (0, 255, 0), 2)
                     if not object_label in found:
                         found[object_label] = 1
                     else:
-                        found[object_label] += found[object_label]
+                        found[object_label] += 1
 
             detection_stats = 'found objects: '
             for object_found, count in found.items():
@@ -81,17 +98,11 @@ def run(args):
                 plugin.publish(f'{TOPIC_TEMPLATE}.{object_found}', count, timestamp=timestamp)
             logging.info(detection_stats)
 
-            if sampling_countdown > 0:
-                sampling_countdown -= 1
-            elif sampling_countdown == 0:
-                # NOTE: OpenCV assumes the image is BGR, but we have RGB (PyWaggle converts it into RGB)
-                #       so we flip RGB to BGR to save the image in RGB
-                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-                cv2.imwrite('/tmp/sample.jpg', image)
-                plugin.upload_file('/tmp/sample.jpg')
+            if do_sampling:
+                sample.data = image
+                sample.save(f'sample_{timestamp}.jpg')
+                plugin.upload_file(f'sample_{timestamp}.jpg')
                 logging.info("uploaded sample")
-                # Reset the count
-                sampling_countdown = args.sampling_interval
 
             if args.interval > 0:
                 time.sleep(args.interval)
