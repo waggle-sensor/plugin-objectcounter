@@ -1,6 +1,6 @@
-RELEASE?=0.1.0
-PLATFORM?=linux/arm64
-IMAGE=object-counter
+RELEASE?=0.2.0
+PLATFORM?=linux/arm64,linux/amd64
+IMAGE=objectcounter
 
 all: image
 

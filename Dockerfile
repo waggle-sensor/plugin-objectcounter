@@ -24,7 +24,7 @@ COPY PyTorch /app/PyTorch
 COPY hubconf.py app.py category_names.txt /app/
 
 ARG SAGE_STORE_URL="https://osn.sagecontinuum.org"
-ARG BUCKET_ID_MODEL="a54b47cd-2a0f-4004-b576-9583693884ae"
+ARG BUCKET_ID_MODEL="cafb2b6a-8e1d-47c0-841f-3cad27737698"
 
 ENV SAGE_STORE_URL=${SAGE_STORE_URL} \
     BUCKET_ID_MODEL=${BUCKET_ID_MODEL}
