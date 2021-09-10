@@ -1,4 +1,4 @@
-RELEASE?=0.2.0
+RELEASE?=0.3.0
 PLATFORM?=linux/arm64,linux/amd64
 IMAGE=objectcounter
 

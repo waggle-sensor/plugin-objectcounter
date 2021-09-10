@@ -30,7 +30,11 @@ def run(args):
     if args.all_objects:
         target_objects = classes_to_labels
     else:
-        target_objects = args.object
+        if args.object is None:
+            logging.error('No object specified. Will use all registered objects')
+            target_objects = classes_to_labels
+        else:
+            target_objects = args.object
     logging.info("target objects: %s", ' '.join(target_objects))
 
     logging.info("loading model %s...", args.model)
@@ -50,7 +54,7 @@ def run(args):
     if args.sampling_interval >= 0:
         logging.info("sampling enabled -- occurs every %sth inferencing", args.sampling_interval)
         sampling_countdown = args.sampling_interval
-    camera = Camera(Path(args.stream))
+    camera = Camera(args.stream)
     logging.info("object counter starts...")
     while True:
         for sample in camera.stream():
