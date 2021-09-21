@@ -1,10 +1,11 @@
 name: objectcounter
 namespace: waggle
-version: "0.1.0"
+version: "0.3.1"
 description: "Object Counter"
 source:
     architectures:
         - linux/arm64
+        - linux/amd64
     url: https://github.com/waggle-sensor/plugin-objectcounter.git
     branch: main
 inputs:
