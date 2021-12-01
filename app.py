@@ -37,6 +37,10 @@ def run(args):
             target_objects = args.object
     logging.info("target objects: %s", ' '.join(target_objects))
 
+    timestamp = time.time()
+    plugin.publish('env.count.log', 'Object Counter: Loading Model', timestamp=timestamp)
+    print(f"Loading Model at time: {timestamp}")
+
     logging.info("loading model %s...", args.model)
     if torch.cuda.is_available():
         logging.info("CUDA is available")
@@ -48,6 +52,10 @@ def run(args):
         ssd_model = torch.load(args.model, map_location=torch.device('cpu'))
         flag_cuda = False
     ssd_model.eval()
+
+    timestamp = time.time()
+    plugin.publish('env.count.log', 'Object Counter: Model Loaded', timestamp$
+    print(f"Model Loaded at time: {timestamp}")
 
     logging.info("cut-out confidence level is set to %s", args.confidence_level)
     sampling_countdown = -1
@@ -65,10 +73,19 @@ def run(args):
                 do_sampling = True
                 sampling_countdown = args.sampling_interval
 
+            timestamp = time.time()
+            plugin.publish('env.count.log', 'Object Counter: Getting an Image', timestamp$
+            print(f"Getting an Image at time: {timestamp}")
+
             image = sample.data
             height = image.shape[0]
             width = image.shape[1]
             timestamp = sample.timestamp
+
+            timestamp = time.time()
+            plugin.publish('env.count.log', 'Object Counter: Starting Inference', timestamp$
+            print(f"Starting Inference at time: {timestamp}")
+
             inputs = [utils.prepare_input(None, image, image_size=(args.image_size, args.image_size))]
             tensor = utils.prepare_tensor(inputs, cuda=flag_cuda)
 
@@ -96,6 +113,10 @@ def run(args):
                     else:
                         found[object_label] += 1
 
+            timestamp = time.time()
+            plugin.publish('env.count.log', 'Object Counter: Inference Ended', timestamp$
+            print(f"Inference Ended at time: {timestamp}")
+
             detection_stats = 'found objects: '
             for object_found, count in found.items():
                 detection_stats += f'{object_found} [{count}] '
@@ -108,8 +129,10 @@ def run(args):
                 plugin.upload_file(f'sample_{timestamp}.jpg')
                 logging.info("uploaded sample")
 
+            exit(0)
             if args.interval > 0:
                 time.sleep(args.interval)
+
 
 
 if __name__ == '__main__':
