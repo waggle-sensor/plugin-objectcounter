@@ -8,6 +8,8 @@ funding:
 license: "The license agreed by Argonne National Laboratory"
 keywords: "object counter, object detection, machine learning"
 homepage: "https://github.com/waggle-sensor/plugin-objectcounter/blob/main/ecr-meta/ecr-science-description.md"
+funding: "NSF 1935984"
+collaborators: "Bhupendra Raut, Dario Dematties Reyes, Joseph Swantek, Neal Conrad, Nicola Ferrier, Pete Beckman, Raj Sankaran, Robert Jackson, Scott Collis, Sean Shahkarami, Seongha Park, Sergey Shemyakin, Wolfgang Gerlach, Yongho Kim"
 source:
     architectures:
         - "linux/arm64"
