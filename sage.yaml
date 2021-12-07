@@ -13,7 +13,7 @@ source:
         - "linux/arm64"
         - "linux/amd64"
     url: "https://github.com/waggle-sensor/plugin-objectcounter.git"
-    branch: "main"
+    branch: "oneshot"
 inputs:
     - id: "stream"
       type: "string"
