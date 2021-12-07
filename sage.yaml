@@ -1,10 +1,8 @@
-name: "objectcounter"
+name: "object-counter"
 namespace: "waggle"
 version: "0.3.1"
 description: "Object Counter"
 authors: "Yongho Kim <yongho.kim@anl.gov>"
-collaborators: "Waggle Team <https://wa8.gl>"
-funding:
 license: "The license agreed by Argonne National Laboratory"
 keywords: "object counter, object detection, machine learning"
 homepage: "https://github.com/waggle-sensor/plugin-objectcounter/blob/main/ecr-meta/ecr-science-description.md"
