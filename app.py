@@ -54,7 +54,7 @@ def run(args):
     ssd_model.eval()
 
     timestamp = time.time()
-    plugin.publish('env.count.log', 'Object Counter: Model Loaded', timestamp$
+    plugin.publish('env.count.log', 'Object Counter: Model Loaded', timestamp=timestamp)
     print(f"Model Loaded at time: {timestamp}")
 
     logging.info("cut-out confidence level is set to %s", args.confidence_level)
@@ -74,7 +74,7 @@ def run(args):
                 sampling_countdown = args.sampling_interval
 
             timestamp = time.time()
-            plugin.publish('env.count.log', 'Object Counter: Getting an Image', timestamp$
+            plugin.publish('env.count.log', 'Object Counter: Getting an Image', timestamp=timestamp)
             print(f"Getting an Image at time: {timestamp}")
 
             image = sample.data
@@ -83,7 +83,7 @@ def run(args):
             timestamp = sample.timestamp
 
             timestamp = time.time()
-            plugin.publish('env.count.log', 'Object Counter: Starting Inference', timestamp$
+            plugin.publish('env.count.log', 'Object Counter: Starting Inference', timestamp=timestamp)
             print(f"Starting Inference at time: {timestamp}")
 
             inputs = [utils.prepare_input(None, image, image_size=(args.image_size, args.image_size))]
@@ -114,7 +114,7 @@ def run(args):
                         found[object_label] += 1
 
             timestamp = time.time()
-            plugin.publish('env.count.log', 'Object Counter: Inference Ended', timestamp$
+            plugin.publish('env.count.log', 'Object Counter: Inference Ended', timestamp=timestamp)
             print(f"Inference Ended at time: {timestamp}")
 
             detection_stats = 'found objects: '
