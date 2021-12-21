@@ -19,7 +19,7 @@ $ python3 app.py -object cow -confidence-level 0.7
 $ python3 app.py -all-objects -sampling-interval 0
 
 # to count cars every 10 seconds
-$ python3 app.py -object car -interval 10
+$ python3 app.py -object car -continuous -interval 10
 ```
 
 ## Developer Notes

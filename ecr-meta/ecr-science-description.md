@@ -12,18 +12,18 @@ Inference (calculation) time:
 Model loading time:  
 
 # Arguments
-   '-debug': Debug flag  
-   '-stream': ID or name of a stream, e.g. bottom-camera  
-   '-object': Object name to count  
-   '-all-objects': Consider all registered objects to detect (default = False)  
-   '-model': Path to model (default = 'coco_ssd_resnet50_300_fp32.pth')  
-   '-image-size': Input image size (default = 0.4)  
-   '-confidence-level': Confidence level [0. - 1.] to filter out result  
-   '-interval': Inference interval in seconds (default = 0, no interval)  
-   '-sampling-interval': Sampling interval between inferencing (default = -1, no sampling)  
+   `-debug`: Debug flag  
+   `-stream`: ID or name of a stream, e.g. bottom-camera  
+   `-object`: Object name to count  
+   `-all-objects`: Consider all registered objects to detect (default = False)  
+   `-model`: Path to model (default = `coco_ssd_resnet50_300_fp32.pth`)  
+   `-image-size`: Input image size (default = 0.4)  
+   `-confidence-level`: Confidence level [0. - 1.] to filter out result  
+   `-interval`: Inference interval in seconds (default = 0, no interval)  
+   `-sampling-interval`: Sampling interval between inferencing (default = -1, no sampling)  
 
 # Ontology
 The code publishes measurements with topic `env.count.OBJECT`, where `OBJECT` is the object recognized. Value for a topic indicates the count of the object.
 
 # References
-[1]Nvidia’s DeepLearningExamples, http://github.com/NVIDIA/DeepLearningExamples
+[1] Nvidia’s DeepLearningExamples, http://github.com/NVIDIA/DeepLearningExamples
