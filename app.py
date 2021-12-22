@@ -9,7 +9,7 @@ import torch
 import numpy as np
 from hubconf import nvidia_ssd_processing_utils
 
-import waggle.plugin as Plugin
+from waggle.plugin import Plugin
 from waggle.data.vision import Camera
 
 TOPIC_TEMPLATE = "env.count"
