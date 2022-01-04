@@ -2,7 +2,6 @@
 import logging
 import time
 import argparse
-from pathlib import Path
 
 import cv2
 import torch
@@ -99,8 +98,8 @@ def run(args):
 
                 if do_sampling:
                     sample.data = image
-                    sample.save(f'sample_{timestamp}.jpg')
-                    plugin.upload_file(f'sample_{timestamp}.jpg')
+                    sample.save(f'sample.jpg')
+                    plugin.upload_file(f'sample.jpg', timestamp=timestamp)
                     logging.info("uploaded sample")
 
             if args.continuous == False:
