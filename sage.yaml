@@ -1,6 +1,6 @@
 name: "object-counter"
 namespace: "waggle"
-version: "0.4.2"
+version: "0.4.3"
 description: "Object Counter"
 authors: "Yongho Kim <yongho.kim@anl.gov>"
 license: "The license agreed by Argonne National Laboratory"
