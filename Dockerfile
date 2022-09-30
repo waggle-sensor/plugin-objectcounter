@@ -23,13 +23,7 @@ RUN pip3 install --no-cache-dir -r /app/requirements.txt
 COPY PyTorch /app/PyTorch
 COPY hubconf.py app.py category_names.txt /app/
 
-ARG SAGE_STORE_URL="https://osn.sagecontinuum.org"
-ARG BUCKET_ID_MODEL="cafb2b6a-8e1d-47c0-841f-3cad27737698"
-
-ENV SAGE_STORE_URL=${SAGE_STORE_URL} \
-    BUCKET_ID_MODEL=${BUCKET_ID_MODEL}
-
-RUN sage-cli.py storage files download ${BUCKET_ID_MODEL} coco_ssd_resnet50_300_fp32.pth --target /app/coco_ssd_resnet50_300_fp32.pth
+ADD https://web.lcrc.anl.gov/public/waggle/models/osn-backup/cafb2b6a-8e1d-47c0-841f-3cad27737698/coco_ssd_resnet50_300_fp32.pth /app/coco_ssd_resnet50_300_fp32.pth
 
 WORKDIR /app
 ENTRYPOINT ["python3", "/app/app.py"]
