@@ -1,6 +1,6 @@
-# Plugin Object Counter
+# Object Counter
 
-The plugin counts objects of interest from an image. Supported objects can be found in [category_names](category_names.txt). The plugin automatically uses Nvidia GPU for inferencing when available.
+The plugin counts objects of interest from an image. Supported objects can be found in [coco.names](coco.names). The plugin automatically uses Nvidia GPU for inferencing when available.
 
 ## How to use
 
@@ -21,15 +21,6 @@ $ python3 app.py -all-objects -sampling-interval 0
 # to count cars every 10 seconds
 $ python3 app.py -object car -continuous -interval 10
 ```
-
-## Developer Notes
-
-- The SSD model and util functions in [Nvidia's DeepLearningExamples](https://github.com/NVIDIA/DeepLearningExamples) have an issue that when it does not detect any object from an image, it throws the [runtime exception](https://github.com/NVIDIA/DeepLearningExamples/issues/680). As a workaround, a code change is applied as [suggested](https://github.com/NVIDIA/DeepLearningExamples/issues/680#issuecomment-690337224)
-
-## Acknowledgement
-
-The model scheme and codes are from [Nvidia's DeepLearningExamples](https://github.com/NVIDIA/DeepLearningExamples). The COCO-trained SSD model is also from Nvidia.
-
 
 ## funding
 [NSF 1935984](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1935984)
