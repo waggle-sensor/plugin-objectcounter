@@ -17,12 +17,10 @@ TOPIC_TEMPLATE = "env.count"
 
 
 def load_class_names(namesfile):
-    class_names = []
+    class_names = {}
     with open(namesfile, 'r') as fp:
-        lines = fp.readlines()
-    for line in lines:
-        line = line.rstrip()
-        class_names.append(line)
+        for index, class_name in enumerate(fp):
+            class_names[index] = class_name.strip()
     return class_names
 
 
@@ -56,7 +54,7 @@ class YOLOv7_Main():
         image = sized / 255.0
         image = image.transpose((2, 0, 1))
         image = torch.from_numpy(image).to(self.device).half()
-        image = image.unsqueeze(0)
+        return image.unsqueeze(0)
 
     def inference(self, image):
         with torch.no_grad():
@@ -65,16 +63,19 @@ class YOLOv7_Main():
 
 def run(args):
     with Plugin() as plugin, Camera(args.stream) as camera:
-        classes_to_labels = load_class_names()
+        classes_dict = load_class_names("coco.names")
         if args.all_objects:
-            target_objects = classes_to_labels
+            target_objects = classes_dict
         else:
             if args.object is None:
                 logging.error('No object specified. Will use all registered objects')
-                target_objects = classes_to_labels
+                target_objects = classes_dict
             else:
-                target_objects = args.object
+                for target in args.object:
+                    target_objects[target] = classes_dict[target]
+        classes = [x for x, _ in target_objects.items()]
         logging.info(f'target objects:  {" ".join(target_objects)}')
+        logging.debug(f'class numbers for target objects are {classes}')
         
         yolov7_main = YOLOv7_Main(args, args.model)
         logging.info(f'model {args.model} loaded')
@@ -97,16 +98,16 @@ def run(args):
             pred = yolov7_main.inference(image)
             results = non_max_suppression(
                 pred,
-                args.conf_thres,
-                args.iou_thres,
-                args.classes,
+                args.confidence_level,
+                args.iou_level,
+                classes,
                 agnostic=True)[0]
 
             found = {}
             w = image.shape[1]
             h = image.shape[0]
             for x1, y1, x2, y2, conf, cls in results:
-                object_label = classes_to_labels[cls]
+                object_label = classes_dict[cls]
                 if object_label in target_objects:
                     l = x1 * w/640  ## x1
                     t = y1 * h/640  ## y1
@@ -152,7 +153,7 @@ if __name__ == '__main__':
         help='Object name to count')
     parser.add_argument(
         '-all-objects', dest='all_objects',
-        action='store_true', default=False, type=bool,
+        action='store_true', default=False,
         help='Consider all registered objects to detect')
     parser.add_argument(
         '-model', dest='model',
