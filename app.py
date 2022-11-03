@@ -74,7 +74,7 @@ def run(args):
                 for target in args.object:
                     target_objects[target] = classes_dict[target]
         classes = [x for x, _ in target_objects.items()]
-        logging.info(f'target objects:  {" ".join(target_objects)}')
+        logging.info(f'target objects:  {" ".join([x for _, x in target_objects.items()])}')
         logging.debug(f'class numbers for target objects are {classes}')
         
         yolov7_main = YOLOv7_Main(args, args.model)
@@ -94,7 +94,8 @@ def run(args):
             elif sampling_countdown == 0:
                 do_sampling = True
                 sampling_countdown = args.sampling_interval
-            image = yolov7_main.pre_processing(sample.data)
+            frame = sample.data
+            image = yolov7_main.pre_processing(frame)
             pred = yolov7_main.inference(image)
             results = non_max_suppression(
                 pred,
@@ -107,7 +108,7 @@ def run(args):
             w = image.shape[1]
             h = image.shape[0]
             for x1, y1, x2, y2, conf, cls in results:
-                object_label = classes_dict[cls]
+                object_label = classes_dict[int(cls)]
                 if object_label in target_objects:
                     l = x1 * w/640  ## x1
                     t = y1 * h/640  ## y1
@@ -128,7 +129,7 @@ def run(args):
             logging.info(detection_stats)
 
             if do_sampling:
-                sample.data = image
+                sample.data = frame
                 sample.save(f'sample.jpg')
                 plugin.upload_file(f'sample.jpg', timestamp=sample.timestamp)
                 logging.info("uploaded sample")
