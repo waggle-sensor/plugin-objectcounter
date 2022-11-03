@@ -2,20 +2,16 @@
 import logging
 import time
 import argparse
-from pathlib import Path
 
 import cv2
 import torch
 import numpy as np
 from hubconf import nvidia_ssd_processing_utils
 
-import waggle.plugin as plugin
+from waggle.plugin import Plugin
 from waggle.data.vision import Camera
 
 TOPIC_TEMPLATE = "env.count"
-
-plugin.init()
-
 
 def run(args):
     logging.basicConfig(
@@ -23,91 +19,91 @@ def run(args):
         format='%(asctime)s %(message)s',
         datefmt='%Y/%m/%d %H:%M:%S')
 
-    # utils are sourced from
-    # https://github.com/NVIDIA/DeepLearningExamples/blob/master/PyTorch/Detection/SSD/src/utils.py
-    utils = nvidia_ssd_processing_utils()
-    classes_to_labels = utils.get_coco_object_dictionary()
-    if args.all_objects:
-        target_objects = classes_to_labels
-    else:
-        if args.object is None:
-            logging.error('No object specified. Will use all registered objects')
-            target_objects = classes_to_labels
-        else:
-            target_objects = args.object
-    logging.info("target objects: %s", ' '.join(target_objects))
+    with Plugin() as plugin, Camera(args.stream) as camera:
+        with plugin.timeit("plugin.duration.loading"):
+            # utils are sourced from
+            # https://github.com/NVIDIA/DeepLearningExamples/blob/master/PyTorch/Detection/SSD/src/utils.py
+            utils = nvidia_ssd_processing_utils()
+            classes_to_labels = utils.get_coco_object_dictionary()
+            if args.all_objects:
+                target_objects = classes_to_labels
+            else:
+                if args.object is None:
+                    logging.error('No object specified. Will use all registered objects')
+                    target_objects = classes_to_labels
+                else:
+                    target_objects = args.object
+            logging.info("target objects: %s", ' '.join(target_objects))
+            logging.info("loading model %s...", args.model)
+            if torch.cuda.is_available():
+                logging.info("CUDA is available")
+                ssd_model = torch.load(args.model)
+                ssd_model.to('cuda')
+                flag_cuda = True
+            else:
+                logging.info("CUDA is not avilable; using CPU")
+                ssd_model = torch.load(args.model, map_location=torch.device('cpu'))
+                flag_cuda = False
+            ssd_model.eval()
+            logging.info("cut-out confidence level is set to %s", args.confidence_level)
+            sampling_countdown = -1
+            if args.sampling_interval >= 0:
+                logging.info("sampling enabled -- occurs every %sth inferencing", args.sampling_interval)
+                sampling_countdown = args.sampling_interval
 
-    logging.info("loading model %s...", args.model)
-    if torch.cuda.is_available():
-        logging.info("CUDA is available")
-        ssd_model = torch.load(args.model)
-        ssd_model.to('cuda')
-        flag_cuda = True
-    else:
-        logging.info("CUDA is not avilable; using CPU")
-        ssd_model = torch.load(args.model, map_location=torch.device('cpu'))
-        flag_cuda = False
-    ssd_model.eval()
-
-    logging.info("cut-out confidence level is set to %s", args.confidence_level)
-    sampling_countdown = -1
-    if args.sampling_interval >= 0:
-        logging.info("sampling enabled -- occurs every %sth inferencing", args.sampling_interval)
-        sampling_countdown = args.sampling_interval
-    camera = Camera(args.stream)
-    logging.info("object counter starts...")
-    while True:
-        for sample in camera.stream():
+        logging.info("object counter starts...")
+        while True:
             do_sampling = False
             if sampling_countdown > 0:
                 sampling_countdown -= 1
             elif sampling_countdown == 0:
                 do_sampling = True
                 sampling_countdown = args.sampling_interval
+            with plugin.timeit("plugin.duration.input"):
+                sample = camera.snapshot()
+                image = sample.data
+                height = image.shape[0]
+                width = image.shape[1]
+                timestamp = sample.timestamp
+                inputs = [utils.prepare_input(None, image, image_size=(args.image_size, args.image_size))]
+                tensor = utils.prepare_tensor(inputs, cuda=flag_cuda)
 
-            image = sample.data
-            height = image.shape[0]
-            width = image.shape[1]
-            timestamp = sample.timestamp
-            inputs = [utils.prepare_input(None, image, image_size=(args.image_size, args.image_size))]
-            tensor = utils.prepare_tensor(inputs, cuda=flag_cuda)
-
-            with torch.no_grad():
+            with plugin.timeit("plugin.duration.inference"), torch.no_grad():
                 detections_batch = ssd_model(tensor)
 
-            results_per_input = utils.decode_results(detections_batch)
-            best_results_per_input = [utils.pick_best(results, args.confidence_level) for results in results_per_input]
+            with plugin.timeit("plugin.duration.postprocessing"):
+                results_per_input = utils.decode_results(detections_batch)
+                best_results_per_input = [utils.pick_best(results, args.confidence_level) for results in results_per_input]
+                bboxes, classes, confidences = best_results_per_input[0]
+                classes -= 1
+                found = {}
+                for box, cls, conf in zip(bboxes, classes, confidences):
+                    object_label = classes_to_labels[cls]
+                    if object_label in target_objects:
+                        if do_sampling:
+                            box = utils.descale_box(box, width, height)
+                            print(f'{box}, {width}, {height}')
+                            rounded_conf = round(float(conf), 2)
+                            image = cv2.putText(image, f'{object_label}: {rounded_conf}', (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,255,0), 2)
+                            image = cv2.rectangle(image, (box[0], box[1]), (box[2], box[3]), (0, 255, 0), 2)
+                        if not object_label in found:
+                            found[object_label] = 1
+                        else:
+                            found[object_label] += 1
+                    detection_stats = 'found objects: '
+                    for object_found, count in found.items():
+                        detection_stats += f'{object_found} [{count}] '
+                        plugin.publish(f'{TOPIC_TEMPLATE}.{object_found}', count, timestamp=timestamp)
+                    logging.info(detection_stats)
 
-            bboxes, classes, confidences = best_results_per_input[0]
-            classes -= 1
+                if do_sampling:
+                    sample.data = image
+                    sample.save(f'sample.jpg')
+                    plugin.upload_file(f'sample.jpg', timestamp=timestamp)
+                    logging.info("uploaded sample")
 
-            found = {}
-            for box, cls, conf in zip(bboxes, classes, confidences):
-                object_label = classes_to_labels[cls]
-                if object_label in target_objects:
-                    if do_sampling:
-                        box = utils.descale_box(box, width, height)
-                        print(f'{box}, {width}, {height}')
-                        rounded_conf = round(float(conf), 2)
-                        image = cv2.putText(image, f'{object_label}: {rounded_conf}', (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,255,0), 2)
-                        image = cv2.rectangle(image, (box[0], box[1]), (box[2], box[3]), (0, 255, 0), 2)
-                    if not object_label in found:
-                        found[object_label] = 1
-                    else:
-                        found[object_label] += 1
-
-            detection_stats = 'found objects: '
-            for object_found, count in found.items():
-                detection_stats += f'{object_found} [{count}] '
-                plugin.publish(f'{TOPIC_TEMPLATE}.{object_found}', count, timestamp=timestamp)
-            logging.info(detection_stats)
-
-            if do_sampling:
-                sample.data = image
-                sample.save(f'sample_{timestamp}.jpg')
-                plugin.upload_file(f'sample_{timestamp}.jpg')
-                logging.info("uploaded sample")
-
+            if args.continuous == False:
+                exit(0)
             if args.interval > 0:
                 time.sleep(args.interval)
 
@@ -142,6 +138,10 @@ if __name__ == '__main__':
         '-confidence-level', dest='confidence_level',
         action='store', default=0.4,
         help='Confidence level [0. - 1.] to filter out result')
+    parser.add_argument(
+        '-continuous', dest='continuous',
+        action='store_true', default=False,
+        help='Flag to run this plugin forever')
     parser.add_argument(
         '-interval', dest='interval',
         action='store', default=0, type=int,

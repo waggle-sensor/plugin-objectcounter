@@ -1,19 +1,19 @@
-name: "objectcounter"
+name: "object-counter"
 namespace: "waggle"
-version: "0.3.1"
+version: "0.4.3"
 description: "Object Counter"
 authors: "Yongho Kim <yongho.kim@anl.gov>"
-collaborators: "Waggle Team <https://wa8.gl>"
-funding:
 license: "The license agreed by Argonne National Laboratory"
 keywords: "object counter, object detection, machine learning"
 homepage: "https://github.com/waggle-sensor/plugin-objectcounter/blob/main/ecr-meta/ecr-science-description.md"
+funding: "NSF 1935984"
+collaborators: "Bhupendra Raut, Dario Dematties Reyes, Joseph Swantek, Neal Conrad, Nicola Ferrier, Pete Beckman, Raj Sankaran, Robert Jackson, Scott Collis, Sean Shahkarami, Seongha Park, Sergey Shemyakin, Wolfgang Gerlach, Yongho Kim"
 source:
     architectures:
         - "linux/arm64"
         - "linux/amd64"
     url: "https://github.com/waggle-sensor/plugin-objectcounter.git"
-    branch: "main"
+    branch: "oneshot"
 inputs:
     - id: "stream"
       type: "string"
@@ -27,6 +27,8 @@ inputs:
       type: "int"
     - id: "confidence-level"
       type: "float"
+    - id: "continuous"
+      type: "boolean"
     - id: "interval"
       type: "int"
     - id: "sampling-interval"
