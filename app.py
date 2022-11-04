@@ -64,17 +64,20 @@ class YOLOv7_Main():
 def run(args):
     with Plugin() as plugin, Camera(args.stream) as camera:
         classes_dict = load_class_names("coco.names")
+        target_objects = []
+        classes = []
         if args.all_objects:
-            target_objects = classes_dict
+            target_objects = list(classes_dict.values())
         else:
             if args.object is None:
                 logging.error('No object specified. Will use all registered objects')
-                target_objects = classes_dict
+                target_objects = list(classes_dict.values())
             else:
-                for target in args.object:
-                    target_objects[target] = classes_dict[target]
-        classes = [x for x, _ in target_objects.items()]
-        logging.info(f'target objects:  {" ".join([x for _, x in target_objects.items()])}')
+                target_objects = args.object
+        for index, target in classes_dict.items():
+            if target in target_objects:
+                classes.append(index)
+        logging.info(f'target objects:  {" ".join(target_objects)}')
         logging.debug(f'class numbers for target objects are {classes}')
         
         yolov7_main = YOLOv7_Main(args, args.model)
@@ -105,8 +108,8 @@ def run(args):
                 agnostic=True)[0]
 
             found = {}
-            w = image.shape[1]
-            h = image.shape[0]
+            w = frame.shape[1]
+            h = frame.shape[0]
             for x1, y1, x2, y2, conf, cls in results:
                 object_label = classes_dict[int(cls)]
                 if object_label in target_objects:
@@ -114,10 +117,10 @@ def run(args):
                     t = y1 * h/640  ## y1
                     r = x2 * w/640  ## x2
                     b = y2 * h/640  ## y2
-                    rounded_conf = round(conf, 2)
+                    rounded_conf = (conf * 100).int()
                     if do_sampling:
                         frame = cv2.rectangle(frame, (int(l), int(t)), (int(r), int(b)), (255,0,0), 2)
-                        frame = cv2.putText(frame, f'{object_label}:{rounded_conf}', (int(l), int(t)-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,255,0), 2)
+                        frame = cv2.putText(frame, f'{object_label}:{rounded_conf}%', (int(l), int(t)-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,255,0), 2)
                     if not object_label in found:
                         found[object_label] = 1
                     else:
