@@ -1,1 +1,2 @@
 pywaggle[all]==0.55.*
+pyyaml
